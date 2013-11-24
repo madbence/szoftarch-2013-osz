@@ -1,0 +1,165 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  font-family: 'Roboto Slab', 'Open Sans', 'Helvetica Neue', HelveticaNeue, Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  color: #222;
+  background-color: #eee;
+  height: 100%;
+  overflow-y: scroll;
+}
+
+p {
+  width: 80%;
+  margin-bottom: 15px;
+}
+
+h1 {
+  font-family: 'Roboto Slab', serif;
+  font-weight: 100;
+  font-size: 3em;
+}
+
+h2, h3, h4, h5, h6 {
+  font-weight: 300;
+}
+
+h2 {
+  font-size: 2em;
+  width: 70%;
+}
+
+h2 small {
+  font-size: 0.5em;
+  color: #444;
+}
+
+h4 {
+  font-size: 1.2em;
+}
+
+button {
+  padding: 5px;
+  margin: 10px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  background-color: #eee;
+  cursor: pointer;
+  font-family: 'Roboto Slab', 'Open Sans', 'Helvetica Neue', HelveticaNeue, Helvetica, Arial, sans-serif;
+  transition: all 200ms;
+}
+
+button:hover {
+  background-color: #ddd;
+}
+
+#application {
+  width: 960px;
+  padding: 30px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  min-height: 100%;
+  background: white;
+  border-left: 1px solid #aaa;
+  border-right: 1px solid #aaa;
+  box-shadow: 0 0 30px rgba(0,0,0,0.2);
+}
+
+.tasks {
+  border: 1px solid #bbb;
+  border-radius: 2px;
+  list-style: none;
+}
+
+.task {
+  padding: 10px;
+  border-top: 1px solid #bbb;
+  transition: all 200ms;
+  cursor: pointer;
+}
+
+.task:hover {
+  background-color: #f0f0f0;
+}
+
+.task:first-child {
+  border: none;
+}
+
+.task h3 {
+  font-size: 0.9em;
+  color: #444;
+}
+
+.task .title {
+  position: relative;
+  overflow: hidden;
+}
+
+.task .title aside {
+  position: absolute;
+  top: 0;
+  right: -500px;
+  transition: all 500ms;
+}
+
+.task:hover .title aside {
+  right: 0;
+}
+
+.task .subtasks-wrapper.closed {
+  visibility: hidden;
+  height: 0;
+}
+
+.task .subtasks-wrapper {
+  border-top: 1px solid #bbb;
+  margin: -10px;
+  margin-top: 10px;
+  overflow: hidden;
+  transition: all 1s;
+  background-color: white;
+}
+
+.subtasks .task {
+  list-style: none;
+  padding: 5px;
+  padding-left: 30px;
+  position: relative;
+}
+
+.subtasks .task.full {
+  background-color: rgba(255,0,0,0.1);
+}
+.subtasks .task.full:hover {
+  background-color: rgba(255,0,0,0.2);
+}
+.subtasks .task.applied {
+  background-color: rgba(0,128,255,0.2);
+}
+.subtasks .task.applied:hover {
+  background-color: rgba(0,128,255,0.3);
+}
+
+.subtasks .task h5 {
+  position: absolute;
+  top: 5px;
+  right: -100px;
+  transition: all 500ms;
+}
+
+.subtasks .task:hover h5 {
+  right: 5px;
+}
+
+.subtasks .details.closed {
+  display: none;
+}

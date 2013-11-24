@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Homework Manager</title>
+    <meta charset="utf-8" />
+    <link href='http://fonts.googleapis.com/css?family=Roboto+Slab:100,300&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <template id="dashboard-tpl">
+    <h1>Aktuális feladatok</h1>
+    <p>A következő listában a számodra kiírt aktuális feladatokat láthatod.</p>
+    <p>Ez(ek) vagy direkt neked kiírt feladatok, vagy a "választható" feladatok közül te jelentkeztél rá. Ez utóbbi esetben a feladatot a jelentkezési határidőig bármikor leadhatod.</p>
+    <p>Megoldás feltöltéséhez kattints a feladatra, majd feltölteni kívánt fájlt húzd a felületre. A megoldásod értékelését szintén ezen a felületen nézheted meg.</p>
+    <ul id="current-concrete-tasks" class="tasks"></ul>
+    <h1>Választható feladatok</h1>
+    <p>A lenti listában találod meg azokat a feladatokat, amiket valamelyik tárgyadhoz kiírtak.</p>
+    <p>A feladatokra kattintva megnézheted a hozzá tartozó konkrét feladatokat, ezekre tudsz jelentkezni (egyszerre csak egyre), ha még nincs betelve, illetve a jelentkezési határidő nem járt le.</p>
+    <p>A felvett feladatot a jelentkezési határidőig bármikor leadhatod. A pirosan jelzett feladatokra nem tudsz jelentkezni, mert beteltek, kékkel azok a feladatok vannak jelölve, amikre jelentkeztél.</p>
+    <ul id="current-tasks" class="tasks"></ul>
+  </template>
+  <template id="task-tpl">
+    <header class="title">
+      <h2>{{ title }} <small>({{ group }})</small></h2>
+      <aside>
+        <h3>Jelentkezési határidő: <time datetime="{{ rawDeadline }}">{{ deadline }}</time></h3>
+        <h3>Leadási határidő: <time datetime="{{ rawAppDeadline }}">{{ appDeadline }}</time></h3>
+      </aside>
+    </header>
+    <section class="description">{{ description }}</section>
+    <div class="subtasks-wrapper closed">
+      <ul class="subtasks"></ul>
+    </div>
+  </template>
+  <template id="abstract-task-concrete-tpl">
+    <h4>{{ title }}</h4>
+    <h5>({{ currentApp }}/{{ maxApp }} fő)</h5>
+    <section class="details">
+      <article>{{ description }}</article>
+      <button>Jeletkezek</button>
+    </section>
+  </template>
+  <body>
+    <div id="application"></div>
+    <script src="/js/underscore.js"></script>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/backbone.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>
