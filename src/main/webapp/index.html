@@ -7,38 +7,83 @@
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:300&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
-  <template id="dashboard-tpl">
+  <template id="student-dashboard">
+    <aside id="user-info">
+      {{ model.username }} | <a href="/logout">Kijelentkezés</a>
+    </aside>
+    <nav id="main-nav">
+      <a id="nav-tasks" href="/student/tasks">Feladatok</a>
+      <a id="nav-concrete-tasks" href="/student/concrete-tasks">Konkrét feladatok</a>
+    </nav>
+    <div id="subview-container"></div>
+  </template>
+  <template id="student-current-tasks">
     <h1>Aktuális feladatok</h1>
     <p>A következő listában a számodra kiírt aktuális feladatokat láthatod.</p>
     <p>Ez(ek) vagy direkt neked kiírt feladatok, vagy a "választható" feladatok közül te jelentkeztél rá. Ez utóbbi esetben a feladatot a jelentkezési határidőig bármikor leadhatod.</p>
     <p>Megoldás feltöltéséhez kattints a feladatra, majd feltölteni kívánt fájlt húzd a felületre. A megoldásod értékelését szintén ezen a felületen nézheted meg.</p>
-    <ul id="current-concrete-tasks" class="tasks"></ul>
-    <h1>Választható feladatok</h1>
-    <p>A lenti listában találod meg azokat a feladatokat, amiket valamelyik tárgyadhoz kiírtak.</p>
-    <p>A feladatokra kattintva megnézheted a hozzá tartozó konkrét feladatokat, ezekre tudsz jelentkezni (egyszerre csak egyre), ha még nincs betelve, illetve a jelentkezési határidő nem járt le.</p>
-    <p>A felvett feladatot a jelentkezési határidőig bármikor leadhatod. A pirosan jelzett feladatokra nem tudsz jelentkezni, mert beteltek, kékkel azok a feladatok vannak jelölve, amikre jelentkeztél.</p>
     <ul id="current-tasks" class="tasks"></ul>
   </template>
-  <template id="task-tpl">
-    <header class="title">
-      <h2>{{ title }} <small>({{ group }})</small></h2>
-      <aside>
-        <h3>Jelentkezési határidő: <time datetime="{{ rawDeadline }}">{{ deadline }}</time></h3>
-        <h3>Leadási határidő: <time datetime="{{ rawAppDeadline }}">{{ appDeadline }}</time></h3>
-      </aside>
-    </header>
-    <section class="description">{{ description }}</section>
-    <div class="subtasks-wrapper closed">
-      <ul class="subtasks"></ul>
-    </div>
+  <template id="student-available-tasks">
+    <h1>Elérhető feladatok</h1>
+    <p>A lenti listában találod meg azokat a feladatokat, amiket valamelyik tárgyadhoz kiírtak.</p>
+    <ul id="available-tasks" class="tasks"></ul>
   </template>
-  <template id="abstract-task-concrete-tpl">
-    <h4>{{ title }}</h4>
-    <h5>({{ currentApp }}/{{ maxApp }} fő)</h5>
-    <section class="details">
-      <article>{{ description }}</article>
-      <button>Jeletkezek</button>
-    </section>
+  <template id="student-task-item">
+    <a href="/student/tasks/{{ model.id }}">
+      <header>
+        <h3>{{ model.title }} <small>({{ model.group }})</small></h3>
+        <div class="info">
+          <h5>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h5>
+          <h5>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h5>
+        </div>
+      </header>
+      <p>{{ model.description }}</p>
+    </a>
+  </template>
+  <template id="student-task">
+    <h1>{{ model.title }}</h1>
+    <h2>{{ model.group }}</h2>
+    <h3>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h3>
+    <h3>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h3>
+    <p>{{ model.description }}</p>
+    <p>A feladathoz tartozó konkrét feladatok listája:</p>
+    <ul id="concrete-tasks" class="tasks"></ul>
+  </template>
+  <template id="student-concrete-task">
+    <h1>{{ model.title }}</h1>
+    <h2>{{ model.group }}</h2>
+    <h3>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h3>
+    <h3>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h3>
+    <p>{{ model.description }}</p>
+  </template>
+  <template id="student-concrete-task-item">
+    <a href="/student/concrete-tasks/{{ model.id }}">
+      <header>
+        <h3>{{ model.title }}</h3>
+        <h4 class="info"> {{ model.currentApplications }}/{{ model.maxApplications }} fő</h4>
+      </header>
+      <p>{{ model.description }}</p>
+    </a>
+  </template>
+  <template id="admin-dashboard-tpl">
+    <nav>
+      <a href="/tasks">Feladatok</a>
+      <a href="/users">Felhasználók</a>
+      <a href="/groups">Csoportok</a>
+    </nav>
+    <div id="subview-container"></div>
+  </template>
+  <template id="admin-tasks-tpl">
+    <h1>Konkrét feladatok</h2>
+    <button>Új konkrét feladat kiírása</button>
+    <h2>Csoportnak kiírt feladatok</h2>
+    <ul id="group-concrete-tasks"></ul>
+    <h3>Felhasználóknak kiírt feladatok</h3>
+    <ul id="user-concrete-tasks"></ul>
+    <h1>Feladatok</h1>
+    <button>Új feladat kiírása</button>
+    <ul id="group-tasks"></ul>
   </template>
   <body>
     <div id="application"></div>

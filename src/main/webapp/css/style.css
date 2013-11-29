@@ -17,9 +17,14 @@ body {
   overflow-y: scroll;
 }
 
+a:link, a:hover, a:visited, a:active {
+  color: inherit;
+  text-decoration: none;
+}
+
 p {
   width: 80%;
-  margin-bottom: 15px;
+  margin-top: 20px;
 }
 
 h1 {
@@ -28,17 +33,18 @@ h1 {
   font-size: 3em;
 }
 
-h2, h3, h4, h5, h6 {
+h3, h4, h5, h6 {
   font-weight: 300;
 }
 
 h2 {
   font-size: 2em;
+  font-weight: 100;
   width: 70%;
 }
 
-h2 small {
-  font-size: 0.5em;
+h3 small {
+  font-size: 0.8em;
   color: #444;
 }
 
@@ -66,14 +72,60 @@ button:hover {
   padding: 30px;
   box-sizing: border-box;
   margin: 0 auto;
+  margin-top: 50px;
   min-height: 100%;
   background: white;
-  border-left: 1px solid #aaa;
-  border-right: 1px solid #aaa;
+  border: 1px solid #aaa;
+  border-bottom: none;
   box-shadow: 0 0 30px rgba(0,0,0,0.2);
+  position: relative;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+#user-info {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+#main-nav {
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  height: 40px;
+  position: absolute;
+  top: -41px;
+  border: 1px solid #aaa;
+  border-bottom: none;
+  background: white;
+}
+
+#main-nav a {
+  padding: 10px 20px;
+  height: 19px;
+  display: block;
+  float: left;
+  transition: all 200ms;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  background: #ddd;
+}
+
+#main-nav a:last-child {
+  border-right: none;
+}
+
+#main-nav a:hover {
+  background: #efefef;
+}
+
+#main-nav a.active {
+  background: white;
+  border-bottom: 1px solid white;
 }
 
 .tasks {
+  margin-top: 20px;
   border: 1px solid #bbb;
   border-radius: 2px;
   list-style: none;
@@ -84,6 +136,8 @@ button:hover {
   border-top: 1px solid #bbb;
   transition: all 200ms;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
 .task:hover {
@@ -94,72 +148,28 @@ button:hover {
   border: none;
 }
 
-.task h3 {
+.task.applied {
+  background-color: rgba(0,128,255,0.2);
+}
+
+.task h4 {
   font-size: 0.9em;
   color: #444;
 }
 
-.task .title {
-  position: relative;
-  overflow: hidden;
+.task p {
+  font-size: 0.9em;
 }
 
-.task .title aside {
+.task .info {
   position: absolute;
-  top: 0;
+  text-align: right;
+  top: 5px;
   right: -500px;
   transition: all 500ms;
 }
 
-.task:hover .title aside {
-  right: 0;
-}
-
-.task .subtasks-wrapper.closed {
-  visibility: hidden;
-  height: 0;
-}
-
-.task .subtasks-wrapper {
-  border-top: 1px solid #bbb;
-  margin: -10px;
-  margin-top: 10px;
-  overflow: hidden;
-  transition: all 1s;
-  background-color: white;
-}
-
-.subtasks .task {
-  list-style: none;
-  padding: 5px;
-  padding-left: 30px;
-  position: relative;
-}
-
-.subtasks .task.full {
-  background-color: rgba(255,0,0,0.1);
-}
-.subtasks .task.full:hover {
-  background-color: rgba(255,0,0,0.2);
-}
-.subtasks .task.applied {
-  background-color: rgba(0,128,255,0.2);
-}
-.subtasks .task.applied:hover {
-  background-color: rgba(0,128,255,0.3);
-}
-
-.subtasks .task h5 {
-  position: absolute;
-  top: 5px;
-  right: -100px;
-  transition: all 500ms;
-}
-
-.subtasks .task:hover h5 {
+.task:hover .info {
   right: 5px;
 }
 
-.subtasks .details.closed {
-  display: none;
-}

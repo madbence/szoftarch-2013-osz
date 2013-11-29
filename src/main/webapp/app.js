@@ -1,90 +1,177 @@
-var http = require('http');
+/* jshint multistr: true */
+var mysql = require('mysql').createConnection('mysql://root:root@localhost:3306/homeworkmanager');
+var express = require('express');
 var fs = require('fs');
 
-http.createServer(function(req, res) {
-  if(req.url === '/tasks') {
-    res.writeHead(200, {
-      'Content-Type': 'application/json'
-    });
-    return res.end(JSON.stringify([{
-      id: 1,
-      title: 'Házi feladat',
-      description: 'A feladatokat párban kell elkészíteni. Házi feladat, dokumentáció feltöltés: 12. hét vége - december 1.  vasárnap',
-      group: 'Szoftverarchitektúrák 2013/14/1',
-      deadline: new Date(Date.now()+1000*60*60),
-      appDeadline: new Date(Date.now()+1000*60*60*2)
-    },{
-      id: 2,
-      title: 'Másik feladat',
-      description: 'Másik leírás',
-      group: 'csoport2',
-      deadline: new Date(Date.now()+1000*60*60),
-      appDeadline: new Date(Date.now()+1000*60*60*2)
-    }]));
-  }
-  if(req.url.match(/^\/tasks\/\d+$/)) {
-    res.writeHead(200, {
-      'Content-Type': 'application/json'
-    });
-    return res.end(JSON.stringify([{
-      id: 1,
-      title: 'Házi feladat kiadó és beszedő rendszer',
-      maxApp: 2,
-      currentApp: 1
-    },{
-      id: 2,
-      title: 'Házi feladat kiadó és beszedő rendszer',
-      maxApp: 2,
-      currentApp: 2
-    },{
-      id: 3,
-      title: 'Házi feladat kiadó és beszedő rendszer',
-      maxApp: 2,
-      currentApp: 0
-    },{
-      id: 4,
-      title: 'Házi feladat kiadó és beszedő rendszer',
-      maxApp: 2,
-      currentApp: 1
-    },{
-      id: 5,
-      title: 'Házi feladat kiadó és beszedő rendszer',
-      maxApp: 2,
-      currentApp: 1,
-      applied: true,
-    },{
-      id: 6,
-      title: 'Házi feladat kiadó és beszedő rendszer',
-      maxApp: 2,
-      currentApp: 1
-    }]));
-  }
-  if(req.url.match(/^\/concrete-tasks\/\d+$/)) {
-    res.writeHead(200, {
-      'Content-Type': 'application/json'
-    });
-    return res.end(JSON.stringify({
-      id: 1,
-      title: 'Házi feladat kiadó és beszedő rendszer',
-      description: 'A feladat egy olyan keretrendszer kialakítása, melynek segítségével oktatók tudnak könnyen házi feladatokat kiírni hallgatóknak és a hallgatók a megoldásokat fel tudják tölteni. Az oktatók tudjanak a felhasználókból csoportokat kialakítani, a csoportok számára tudjanak feladatokat kiírni. A konkrét feladatokat az oktató hozzárendelheti a hallgatókhoz, vagy engedélyezhető, hogy a hallgatók maguktól válasszanak. A feladatoknak van határideje, maximális létszáma (ahány hallgató egyszerre dolgozhat rajta), stb. A hallgatók tudjanak megoldásokat feltölteni, amiket az oktató szintén a felületen keresztül tud pontozni. Cél, hogy minél több funkciót nyújtson a rendszer.',
-      group: 'Szoftverarchitektúrák 2013/14/1',
-      deadline: new Date(Date.now()+1000*60*60),
-      appDeadline: new Date(Date.now()+1000*60*60*2),
-      maxApp: 2,
-      currentApp: 1
-    }));
-  }
-  if(req.url === '/') {
-    req.url = '/index.html';
-  }
-  fs.readFile('.' + req.url, 'utf-8', function(err, data) {
-    if(err) {
-      res.writeHead(500, {'Content-Type': 'text/plain'});
-      return res.end('Error: ' + err.toString() + '\n' + err.stack);
-    }
-    res.writeHead(200, {
-      'Content-Type': req.url.match('html') ? 'text/html' : req.url.match('js') ? 'application/javascript' : req.url.match('css') ? 'text/css' : 'text/plain'
-    });
-    res.end(data);
+var app = express();
+
+//app.use(function(req, res, next) {
+//  setTimeout(next, 2000);
+//});
+
+app.use(function(err, req, res, next) {
+  console.error(err);
+  res.json(500, {
+    message: err.toString()
   });
-}).listen(8080);
+});
+
+app.get('/', function(req, res) {
+  fs.readFile('./index.html', 'utf-8', function(err, data) {
+    res.send(data);
+  });
+});
+
+app.get('/js/:file', function(req, res) {
+  fs.readFile('./js/' + req.param('file'), 'utf-8', function(err, data) {
+    res.set('Content-Type', 'application/json');
+    res.send(data);
+  });
+});
+
+app.get('/css/style.css', function(req, res) {
+  fs.readFile('./css/style.css', 'utf-8', function(err, data) {
+    res.set('Content-Type', 'text/css');
+    res.send(data);
+  });
+});
+
+app.get('/api/student/tasks', function(req, res) {
+  mysql.query('SELECT\
+                 t.id as id, \
+                 t.title as title, \
+                 t.description as description, \
+                 t.deadline as deadline, \
+                 t.appDeadline as appDeadline, \
+                 g.title as `group` \
+               FROM students s \
+                 LEFT JOIN groupStudents gs ON gs.studentId = s.id \
+                 LEFT JOIN groups g ON g.id = gs.groupId \
+                 LEFT JOIN groupTasks gt on gt.groupId = g.id \
+                 LEFT JOIN tasks t ON t.id = gt.taskId \
+               WHERE \
+                 s.id = ?', [1], function(err, data) {
+    if(err) {
+      return req.next(err);
+    }
+    res.json(data);
+  });
+});
+
+app.get('/api/student/concrete-tasks', function(req, res) {
+  mysql.query('SELECT\
+                 ct.id as id, \
+                 ct.title as title, \
+                 ct.description as description, \
+                 ct.maxApplications as maxApplications, \
+                 t.deadline as deadline, \
+                 t.appDeadline as appDeadline, \
+                 g.title as `group`, \
+                 count(a.id) as currentApplications, \
+                 sum(if(a.studentId = ?, 1, 0)) as applied \
+               FROM students s \
+                 LEFT JOIN groupStudents gs ON gs.studentId = s.id \
+                 LEFT JOIN groups g ON g.id = gs.groupId \
+                 LEFT JOIN groupTasks gt on gt.groupId = g.id \
+                 LEFT JOIN tasks t ON t.id = gt.taskId \
+                 LEFT JOIN concreteTasks ct ON ct.taskId = t.id \
+                 LEFT JOIN applications a ON a.concreteTaskId = ct.id \
+               WHERE \
+                 s.id = ? \
+               GROUP BY ct.id \
+               HAVING applied > 0', [1, 1], function(err, data) {
+    if(err) {
+      return req.next(err);
+    }
+    res.json(data.map(function(c) {
+      return {
+        title: c.title,
+        description: c.description,
+        maxApplications: c.maxApplications,
+        currentApplications: c.currentApplications,
+        applied: !!c.applied,
+        id: c.id,
+        group: c.group,
+        deadline: c.deadline,
+        appDeadline: c.appDeadline
+      };
+    }));
+  });
+});
+
+app.get('/api/student/tasks/:id', function(req, res) {
+  mysql.query('SELECT\
+                 t.id as id, \
+                 t.title as title, \
+                 t.description as description, \
+                 t.deadline as deadline, \
+                 t.appDeadline as appDeadline, \
+                 g.title as `group` \
+               FROM students s \
+                 LEFT JOIN groupStudents gs ON gs.studentId = s.id \
+                 LEFT JOIN groups g ON g.id = gs.groupId \
+                 LEFT JOIN groupTasks gt on gt.groupId = g.id \
+                 LEFT JOIN tasks t ON t.id = gt.taskId \
+               WHERE \
+                 s.id = ? AND t.id = ?', [1, req.param('id')], function(err, data) {
+    if(err) {
+      return req.next(err);
+    }
+    if(!data.length) {
+      res.json(403, {
+        message: 'Not allowed!'
+      });
+    }
+    var task = data[0];
+    mysql.query('SELECT\
+                   ct.*,\
+                   count(a.id) as currentApplications,\
+                   sum(if(a.studentId = ?, 1, 0)) as applied\
+                 FROM concreteTasks ct\
+                   LEFT OUTER JOIN applications a ON a.concreteTaskId = ct.id\
+                 WHERE ct.taskId = ?\
+                 GROUP BY ct.id', [1, req.param('id')], function(err, data) {
+      if(err) {
+        req.next(err);
+      }
+      task.concreteTasks = data.map(function(c) {
+        return {
+          title: c.title,
+          description: c.description,
+          maxApplications: c.maxApplications,
+          currentApplications: c.currentApplications,
+          applied: !!c.applied,
+          id: c.id,
+          group: task.group,
+          deadline: task.deadline,
+          appDeadline: task.appDeadline
+        };
+      });
+      res.json(task);
+    });
+  });
+});
+
+app.post('/api/student/concrete-tasks/:id', function(req, res) {
+  mysql.query('INSERT INTO applications (studentId, concreteTaskId) VALUES (?, ?)', [1, req.param('id')], function(err) {
+    if(err) {
+      req.next(err);
+    }
+    res.json({
+      ok: true
+    });
+  });
+});
+
+app.delete('/api/student/concrete-tasks/:id', function(req, res) {
+  mysql.query('DELETE FROM applications WHERE studentId = ? AND concreteTaskId = ?', [1, req.param('id')], function(err) {
+    if(err) {
+      req.next(err);
+    }
+    res.json({
+      ok: true
+    });
+  });
+});
+
+app.listen(8080);

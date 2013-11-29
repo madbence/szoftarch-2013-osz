@@ -1,291 +1,343 @@
-var TaskModel = Backbone.Model.extend({
-  toJSON: function() {
-    var model = this.attributes;
-    model.rawDeadline = model.deadline;
-    model.rawAppDeadline = model.appDeadline;
-    return model;
-  }
-});
-var TaskCollection = Backbone.Collection.extend({});
-var ConcreteTaskModel = TaskModel.extend({
-  initialize: function() {
-    if(this.attributes.description == null) {
-      this.set('description', '');
-    }
-  },
-  loadDetails: function(cb) {
-    if(this.detailsLoaded) {
-      return cb();
-    }
-    var self = this;
-    $.ajax({
-      type: 'GET',
-      url: '/concrete-tasks/' + this.get('id'),
-      dataType: 'json',
-      success: function(data) {
-        Object.keys(data).forEach(function(key) {
-          self.set(key, data[key]);
-        });
-        self.detailsLoaded = true;
-        cb();
-      }
-    });
-  }
-});
-var AbstractTaskModel = TaskModel.extend({
-  initialize: function() {
-    this.concreteTasks = new TaskCollection([], {
-      model: ConcreteTaskModel
-    });
-    this.detailsLoaded = false;
-  },
-  loadConcreteTasks: function(cb) {
-    var self = this;
-    if(this.detailsLoaded) {
-      return cb();
-    }
-    $.ajax({
-      type: 'GET',
-      url: 'tasks/' + this.get('id'),
-      dataType: 'json',
-      success: function(data) {
-        self.detailsLoaded = true;
-        self.concreteTasks.add(data);
-        cb();
-      }
-    });
-  },
-});
-var Application = Backbone.Model.extend({
-  initialize: function() {
-    this.abstractTasks = new TaskCollection([], {
-      model: AbstractTaskModel
-    });
-    this.concreteTasks = new TaskCollection([], {
-      model: ConcreteTaskModel
-    });
-  },
-  loadTasks: function() {
-    var self = this;
-    $.ajax({
-      type: 'GET',
-      url: '/tasks',
-      dataType: 'json',
-      success: function(data) {
-        data.forEach(function(model) {
-          self.abstractTasks.add(model);
-        });
-      }
-    });
-  },
-  takeUp: function(task) {
-    task.set('applied', true);
-    task.set('currentApp', task.get('currentApp')+1);
-    this.concreteTasks.add(task);
-  },
-  dropDown: function(task) {
-    task.set('applied', false);
-    task.set('currentApp', task.get('currentApp')-1);
-    this.concreteTasks.remove(task);
-  }
-});
+_.templateSettings.interpolate = /\{\{(.*?)\}\}/g;
 
-var View = Backbone.View.extend({
+var BaseView = Backbone.View.extend({
   initialize: function(options) {
-    this.template = _.template(document.getElementById(options.template).innerHTML);
+    this._template = _.template(
+      document.querySelector(
+        options.templateSelector || this.templateSelector
+      ).innerHTML, null, {
+        variable: 'model'
+      }
+    );
+    this.render();
   },
+  update: function() {},
   render: function() {
-    this.el.innerHTML=this.template(this.model.toJSON());
-    return this;
-  },
-});
-
-var ApplicationView = View.extend({
-  initialize: function() {
-    View.prototype.initialize.apply(this, arguments);
-  },
-  render: function() {
-    View.prototype.render.apply(this);
-    this.abstractTaskCollection = new TaskCollectionView({
-      collection: this.model.abstractTasks,
-      view: AbstractTaskView,
-      el: document.getElementById('current-tasks')
-    }).render();
-    this.concreteTaskCollection = new TaskCollectionView({
-      collection: this.model.concreteTasks,
-      view: ConcreteTaskView,
-      el: document.getElementById('current-concrete-tasks')
-    }).render();
+    this.$el.html(this._template((this.model||this.collection).toJSON(), {
+      variable: 'model'
+    }));
+    this.update();
     return this;
   }
 });
 
-var TaskCollectionView = View.extend({
+var CollectionView = BaseView.extend({
   initialize: function(options) {
-    this.view = options.view;
+    BaseView.prototype.initialize.apply(this, arguments);
+    this._listContainer = this.el.querySelector(options.containerSelector || this.containerSelector);
+    this.collection.on('add', this.add.bind(this));
     this._childViews = [];
+    this.childViewClass = this.childViewClass || options.childViewClass;
+    this._emptyListView = new (options.emptyListView || this.emptyListView)();
     this.collection.each(function(model) {
       this.add(model);
     }, this);
-    this.collection.on('add', this.add.bind(this));
-    this.collection.on('remove', this.remove.bind(this));
+    if(this._childViews.length === 0) {
+      this._listContainer.appendChild(this._emptyListView.el);
+    }
   },
   add: function(model) {
     if(this._childViews.length === 0) {
-      this.el.innerHTML = '';
+      try {
+        this._listContainer.removeChild(this._emptyListView.el);
+      } catch(e) {
+      }
     }
     var el = document.createElement('li');
-    el.className = 'task';
-    this.el.appendChild(el);
-    var view = new (this.view)({
+    var view = new (this.childViewClass)({
       model: model,
-      el: el
+      tagName: 'li',
     });
     this._childViews.push(view);
-    var self = this;
-    view.on('resize', function() {
-      self.trigger('resize');
-    });
-    view.render();
-  },
-  remove: function(model, collection, options) {
-    this.el.removeChild(this._childViews[options.index].el);
-    this._childViews.splice(options.index, 1);
-    if(this._childViews.length === 0) {
-      this.el.innerHTML = '<li class="empty task">Nincs elérhető bejegyzés</li>';
-      return this;
-    }
-  },
-  render: function() {
-    if(this._childViews.length === 0) {
-      this.el.innerHTML = '<li class="empty task">Nincs elérhető bejegyzés</li>';
-      return this;
-    }
-    this._childViews.forEach(function(view) {
-      view.render();
-    });
+    this._listContainer.appendChild(view.el);
   }
 });
 
-var TaskView = View.extend({
-  initialize: function() {
-    View.prototype.initialize.call(this, {
-      template: 'task-tpl'
-    });
-  }
-});
-
-var AbstactSubtaskView = View.extend({
+var LoginView = BaseView.extend({});
+var LayoutView = BaseView.extend({});
+var StudentApplicationView = BaseView.extend({
   events: {
-    'click': 'toggleDetails',
-    'click button': 'activate',
+    'click a': function(e) {
+      e.preventDefault();
+      window.appRouter.navigate(e.currentTarget.pathname.substr(1), {trigger: true});
+    }
   },
+  templateSelector: '#student-dashboard',
   initialize: function() {
-    View.prototype.initialize.call(this, {
-      template: 'abstract-task-concrete-tpl'
+    BaseView.prototype.initialize.apply(this, arguments);
+    this.availableTasksView = new StudentAbstractTasksView({
+      collection: this.model.availableTasks
     });
-    this.model.on('change', this.render.bind(this));
-    this.closed = true;
+    this.currentTasksView = new StudentConcreteTasksView({
+      collection: this.model.currentTasks
+    });
+    this.activeView = this.availableTasksView;
+    this.update();
   },
-  toggleDetails: function(e) {
+  setTab: function(name) {
+    if(name === 'current') {
+      this.activeView = this.currentTasksView;
+    } else if(name === 'available') {
+      this.activeView = this.availableTasksView;
+    }
+    this.update();
+  },
+  update: function() {
+    if(!this.activeView) return;
+    this.el.querySelector('#nav-tasks').classList[this.activeView == this.availableTasksView ? 'add' : 'remove']('active');
+    this.el.querySelector('#nav-concrete-tasks').classList[this.activeView == this.currentTasksView ? 'add' : 'remove']('active');
+    var container = this.el.querySelector('#subview-container');
+    if(container.childNodes.length === 0) {
+      container.appendChild(this.activeView.el);
+    } else if(container.childNodes[0] !== this.activeView.el) {
+      container.removeChild(container.childNodes[0]);
+      container.appendChild(this.activeView.el);
+    }
+  },
+  showTask: function(id) {
     var self = this;
-    e.stopPropagation();
-    this.model.loadDetails(function() {
-      self.closed = !self.closed;
-      $('.details article', self.el)
-        .html(self.model.get('description'));
-      $('.details', self.el)
-        .toggleClass('closed');
-      self.trigger('resize');
+    this.activeView = new StudentAbstractTaskView({
+      model: this.model.availableTasks.get(id)
     });
+    this.update();
+  },
+  showConcreteTask: function(id) {
+    var self = this;
+    var model = this.model.availableTasks.find(function(task) {
+      return task.concreteTasks.any(function(concreteTask) {
+        return concreteTask.id == id;
+      });
+    });
+    if(model) {
+      this.activeView = new StudentConcreteTaskView({
+        model: model.concreteTasks.get(id)
+      });
+    } else {
+      this.activeView = new StudentConcreteTaskView({
+        model: this.model.currentTasks.get(id)
+      });
+    }
+    this.update();
+  }
+});
+var TeacherApplicationView = BaseView.extend({});
+
+var EmptyListItemView = BaseView.extend({
+  className: 'task',
+  initialize: function() {
+    this.render();
   },
   render: function() {
-    View.prototype.render.call(this);
-    this.$el.removeClass('applied');
-    this.$el.removeClass('full');
-    if(this.closed) {
-      $('.details', this.el).addClass('closed');
-    }
-    if(this.model.get('applied')) {
-      this.$el.addClass('applied');
-      $('button', this.el).text('Lejelentkezek');
-    } else if(this.model.get('currentApp') === this.model.get('maxApp')) {
-      this.$el.addClass('full');
-      $('button', this.el).attr('disabled', true);
-    }
-  },
-  activate: function(e) {
-    e.stopPropagation();
-    if(!this.model.get('applied')) {
-      window.app.takeUp(this.model);
-    } else {
-      window.app.dropDown(this.model);
-    }
+    this.el.innerHTML = 'Nincs elérhető bejegyzés';
   }
 });
 
-var AbstractTaskView = TaskView.extend({
+var StudentConcreteTaskItemView = BaseView.extend({
+  templateSelector: '#student-concrete-task-item',
+  className: 'task',
+  update: function() {
+    BaseView.prototype.update();
+    this.el.classList[this.model.get('applied') ? 'add' : 'remove']('applied');
+  }
+});
+
+var StudentConcreteTasksView = CollectionView.extend({
+  templateSelector: '#student-current-tasks',
+  containerSelector: '#current-tasks',
+  emptyListView: EmptyListItemView,
+  childViewClass: StudentConcreteTaskItemView
+});
+
+var StudentConcreteTaskView = BaseView.extend({
+  templateSelector: '#student-concrete-task'
+});
+
+var StudentAbstractTaskItemView = BaseView.extend({
+  templateSelector: '#student-task-item',
+  className: 'task',
   events: {
-    'click': 'toggleDetails',
+    'click': 'showTask',
   },
-  initialize: function() {
-    var self = this;
-    TaskView.prototype.initialize.apply(this, arguments);
-  },
-  resize: function() {
-    var el = $('.subtasks-wrapper', this.el); 
-    if(!el.hasClass('closed')) {
-      el.css('height', $('.subtasks', this.el).height() + 'px');
-    } else {
-      el.css('height', 0 );
-    }
-  },
-  toggleDetails: function() {
-    var self = this;
-    this.model.loadConcreteTasks(function() {
-      var el = $('.subtasks-wrapper', self.el); 
-      el.toggleClass('closed');
-      self.resize();
-    });
-  },
-  render: function() {
-    View.prototype.render.call(this);
-    this._subtasks = new TaskCollectionView({
-      collection: this.model.concreteTasks,
-      view: AbstactSubtaskView,
-      el: $('.subtasks', this.el)[0]
-    });
-    this._subtasks.on('resize', this.resize.bind(this));
+  showTask: function(e) {
+    e.preventDefault();
+    window.appRouter.navigate('student/tasks/' + this.model.get('id'), {trigger: true});
   }
 });
 
-var ConcreteTaskView = TaskView.extend({});
+var StudentAbstractTasksView = CollectionView.extend({
+  templateSelector: '#student-available-tasks',
+  containerSelector: '#available-tasks',
+  emptyListView: EmptyListItemView,
+  childViewClass: StudentAbstractTaskItemView
+});
 
-var Router = Backbone.Router.extend({
+var StudentAbstractTaskView = CollectionView.extend({
+  templateSelector: '#student-task',
+  containerSelector: '#concrete-tasks',
+  emptyListView: EmptyListItemView,
+  childViewClass: StudentConcreteTaskItemView,
   initialize: function() {
-    window.app = new Application();
-    this.appview = new ApplicationView({
-      model: app,
-      el: document.getElementById('application'),
-      template: 'dashboard-tpl'
+    var self = this;
+    this.collection = this.model.concreteTasks;
+    CollectionView.prototype.initialize.apply(this, arguments);
+    window.application.loadAbstractTask(this.model.get('id'));
+  }
+});
+
+var StudentSolutionView = BaseView.extend({});
+
+var StudentsView = CollectionView.extend({});
+var StudentView = BaseView.extend({});
+var StudentCreateView = BaseView.extend({});
+
+var GroupsView = CollectionView.extend({});
+var GroupView = BaseView.extend({});
+var GroupCreateView = BaseView.extend({});
+
+var TeacherTasksView = CollectionView.extend({});
+var TeacherTaskView = BaseView.extend({});
+var TeacherTaskCreateView = BaseView.extend({});
+
+var TeacherConcreteTasksView = CollectionView.extend({});
+var TeacherConcreteTaskView = BaseView.extend({});
+var TeacherConcreteTaskCreateView = BaseView.extend({});
+
+var RateView = BaseView.extend({});
+
+var StudentApplication = Backbone.Model.extend({
+  initialize: function() {
+    this.availableTasks = new Backbone.Collection([], {
+      model: Task
     });
-    app.loadTasks();
+    this.currentTasks = new Backbone.Collection([], {
+      model: ConcreteTask
+    });
+    this.loadAvailableTasks();
+    this.loadCurrentTasks();
   },
+  loadAvailableTasks: function() {
+    var self = this;
+    if(this.availableTasks._loaded) {
+      return;
+    }
+    $.ajax({
+      type: 'GET',
+      url: '/api/student/tasks',
+      dataType: 'json',
+      success: function(tasks) {
+        self.availableTasks.add(tasks);
+        self.availableTasks._loaded = true;
+      }
+    });
+  },
+  loadCurrentTasks: function() {
+    var self = this;
+    if(this.currentTasks._loaded) {
+      return;
+    }
+    $.ajax({
+      type: 'GET',
+      url: '/api/student/concrete-tasks',
+      dataType: 'json',
+      success: function(tasks) {
+        self.currentTasks.add(tasks);
+        self.currentTasks._loaded = true;
+      }
+    });
+  },
+  loadAbstractTask: function(id, fn) {
+    var task = this.availableTasks.get(id);
+    var self = this;
+    if(task.concreteTasks._loaded) {
+      return;
+    }
+    $.ajax({
+      type: 'GET',
+      url: '/api/student/tasks/' + id,
+      dataType: 'json',
+      success: function(model) {
+        model.concreteTasks.forEach(function(concreteTask) {
+          if(self.currentTasks.get(concreteTask.id)) {
+            concreteTask = self.currentTasks.get(concreteTask.id);
+          } else {
+            concreteTask = new ConcreteTask(concreteTask);
+            concreteTask.parent = task;
+          }
+          task.concreteTasks.add(concreteTask);
+        });
+        task.concreteTasks._loaded = true;
+      }
+    });
+  },
+});
+
+var ConcreteTask = Backbone.Model.extend({
+  initialize: function(data) {
+    this.set('isoDeadline', data.deadline);
+    this.set('deadline', new Date(data.deadline));
+    this.set('isoAppDeadline', data.addDeadline);
+    this.set('appDeadline', new Date(data.appDeadline));
+  },
+  toJSON: function() {
+    var base = {};
+    Object.keys(this.attributes).forEach(function(attr) {
+      base[attr] = this.attributes[attr];
+    }, this);
+    base.deadline = base.deadline.toLocaleString();
+    base.appDeadline = base.appDeadline.toLocaleString();
+    return base;
+  }
+});
+var Task = Backbone.Model.extend({
+  initialize: function(data) {
+    this.set('isoDeadline', data.deadline);
+    this.set('deadline', new Date(data.deadline));
+    this.set('isoAppDeadline', data.addDeadline);
+    this.set('appDeadline', new Date(data.appDeadline));
+    this.concreteTasks = new Backbone.Collection();
+    this.concreteTasks._loaded = false;
+  },
+  toJSON: function() {
+    var base = {};
+    Object.keys(this.attributes).forEach(function(attr) {
+      base[attr] = this.attributes[attr];
+    }, this);
+    base.deadline = base.deadline.toLocaleString();
+    base.appDeadline = base.appDeadline.toLocaleString();
+    return base;
+  }
+});
+
+var AppRouter = Backbone.Router.extend({
   routes: {
     '': 'home',
-    'task/:id': 'task',
+    'student/tasks': 'studentTasks',
+    'student/tasks/:id': 'studentTask',
+    'student/concrete-tasks': 'studentConcreteTasks',
+    'student/concrete-tasks/:id': 'studentConcreteTask'
   },
   home: function() {
-    this.appview.render();
-  }
+    window.application = new StudentApplication();
+    this.appView = new StudentApplicationView({
+      model: window.application,
+      el: document.getElementById('application'),
+    });
+  },
+  studentTasks: function() {
+    this.appView.setTab('available');
+  },
+  studentConcreteTasks: function() {
+    this.appView.setTab('current');
+  },
+  studentTask: function(id) {
+    this.appView.showTask(id);
+  },
+  studentConcreteTask: function(id) {
+    this.appView.showConcreteTask(id);
+  },
 });
 
-_.templateSettings = {
-  interpolate: /\{\{(.+?)\}\}/g
-};
-
-var router = new Router();
-
-window.addEventListener('load', function() {
+window.onload = function() {
+  window.appRouter = new AppRouter();
   Backbone.history.start({pushState: true});
-});
+};
