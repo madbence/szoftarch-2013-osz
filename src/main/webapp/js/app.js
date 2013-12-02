@@ -228,7 +228,40 @@ var TeacherStudentsView = CollectionView.extend({
     window.appRouter.navigate('teacher/students/new', {trigger: true});
   }
 });
-var TeacherStudentView = BaseView.extend({});
+var TeacherStudentView = BaseView.extend({
+  templateSelector: '#teacher-rate',
+  initialize: function() {
+    BaseView.prototype.initialize.apply(this, arguments);
+    var self = this;
+    $.ajax({
+      url: '/api/teacher/students/' + this.model.get('id') + '/solutions',
+      dataType: 'json',
+          headers: {
+            'X-Token': window.application.get('token')
+          },
+      success: function(data) {
+        self.el.querySelector('ul').innerHTML=data.map(function(d) {
+          return '<li><a href="/solutions/' + d.id +'">' + d.file + '</a> <input id="rate-' + d.id +'"><button data-id="' + d.id +'">ok</button></li>';
+        }).join('');
+      }
+    });
+  },
+  events: {
+    'click button': 'save'
+  },
+  save: function(e) {
+    $.ajax({
+      type: 'put',
+          headers: {
+            'X-Token': window.application.get('token')
+          },
+      data: JSON.stringify({results: document.getElementById('rate-' + e.currentTarget.dataset['id']).value}),
+      contentType: 'application/json',
+      url: '/api/teacher/students/' + this.model.get('id') + '/solutions/' + e.currentTarget.dataset['id']
+    });
+  }
+});
+
 var TeacherStudentCreateView = BaseView.extend({
   templateSelector: '#teacher-student-new',
   events: {
@@ -482,6 +515,7 @@ var AppRouter = Backbone.Router.extend({
     'teacher/groups': 'teacherGroups',
     'teacher/groups/new': 'teacherNewGroup',
     'teacher/students': 'teacherStudents',
+    'teacher/students/:id': 'teacherStudent',
     'teacher/students/new': 'teacherNewStudent',
     'teacher/tasks/new': 'teacherNewTask',
     'teacher/concrete-tasks/new': 'teacherNewConcreteTask',
@@ -510,6 +544,13 @@ var AppRouter = Backbone.Router.extend({
   },
   teacherStudents: function() {
     this.appView.setTab('students');
+  },
+  teacherStudent: function(id) {
+    this.appView.activeView = new TeacherStudentView({
+      model: window.application.students.get(id)
+    });
+    this.appView._name = null;
+    this.appView.update();
   },
   teacherNewTask: function() {
     this.appView.activeView = new TeacherTaskCreateView({

@@ -10,6 +10,9 @@ var StudentSolutionView = BaseView.extend({
     this.baseModel = opt.baseModel;
     $.ajax({
       type: 'GET',
+          headers: {
+            'X-Token': window.application.get('token')
+          },
       url: '/api/student/concrete-tasks/' + opt.baseModel.get('id') + '/solution',
       success: function(solution) {
         self.model = new Backbone.Model(solution);
@@ -61,6 +64,7 @@ var StudentSolutionView = BaseView.extend({
     xhr.addEventListener('error', function(e) {
       console.log('error', e);
     });
+    xhr.setRequestHeader('x-token', window.application.get('token'));
     xhr.send(formData);
     console.log(file);
     return false;

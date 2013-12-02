@@ -55,7 +55,7 @@ app.post('/api/student/concrete-tasks/:id', studentConcreteTaskRoute.apply);
 app.delete('/api/student/concrete-tasks/:id', studentConcreteTaskRoute.deleteApplication);
 app.get('/api/student/concrete-tasks', studentConcreteTaskRoute.applied);
 app.get('/api/student/concrete-tasks/:id/solution', studentSolutionRoute.show);
-app.post('/api/student/concrete-tasks/:id/solution');
+app.post('/api/student/concrete-tasks/:id/solution', studentSolutionRoute.create);
 
 /** TEACHER ROUTES */
 app.get('/api/teacher/tasks', teacherTaskRoute.index);
@@ -74,6 +74,22 @@ app.delete('/api/teacher/tasks/:id', teacherTaskRoute.delete);
 
 app.post('/api/teacher/concrete-tasks', teacherConcreteTaskRoute.create);
 app.delete('/api/teacher/concrete-tasks/:id', teacherConcreteTaskRoute.delete);
+
+app.get('/api/teacher/students/:id/solutions', function(req, res) {
+  mysql.query('SELECT * FROM solutions WHERE studentId = ?', [req.param('id')], function(err, data) {
+    res.json(data);
+  });
+});
+
+app.put('/api/teacher/students/:id/solutions/:sid', function(req, res) {
+  mysql.query('UPDATE solutions SET result = ? WHERE id = ? AND studentId = ?', [req.body.results, req.param('sid'), req.param('id')], function(err) {
+    console.log(err, req.body);
+    res.json({
+      ok: true
+    });
+  });
+});
+
 
 app.get('/solutions/:id', function(req, res) {
   res.send(fs.readFileSync('./solutions/' + req.param('id')));

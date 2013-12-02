@@ -1,4 +1,5 @@
 var model = require('../../model');
+var fs = require('fs');
 var Busboy = require('busboy');
 
 exports.show = function show(req, res) {
@@ -13,7 +14,7 @@ exports.show = function show(req, res) {
 exports.create = function create(req, res) {
   var busboy = new Busboy({headers: req.headers});
   busboy.on('file', function(field, file, name, enc, mime) {
-    model.solutions.create(req.user.id, req.param('id'), name, function(err, result) {  
+    model.solution.create(req.user.id, req.param('id'), name, function(err, result) {  
       if(err) {
         return req.next(err);
       }
