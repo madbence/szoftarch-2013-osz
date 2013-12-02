@@ -3,8 +3,8 @@
   <head>
     <title>Homework Manager</title>
     <meta charset="utf-8" />
-    <link href='http://fonts.googleapis.com/css?family=Roboto+Slab:100,300&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Slab:100,300&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <template id="student-dashboard">
@@ -14,6 +14,18 @@
     <nav id="main-nav">
       <a id="nav-tasks" href="/student/tasks">Feladatok</a>
       <a id="nav-concrete-tasks" href="/student/concrete-tasks">Konkrét feladatok</a>
+    </nav>
+    <div id="subview-container"></div>
+  </template>
+  <template id="teacher-dashboard">
+    <aside id="user-info">
+      {{ model.username }} | <a href="/logout">Kijelentkezés</a>
+    </aside>
+    <nav id="main-nav">
+      <a id="nav-tasks" href="/teacher/tasks">Feladatok</a>
+      <a id="nav-concrete-tasks" href="/teacher/concrete-tasks">Konkrét feladatok</a>
+      <a id="nav-groups" href="/teacher/groups">Csoportok</a>
+      <a id="nav-students" href="/teacher/students">Hallgatók</a>
     </nav>
     <div id="subview-container"></div>
   </template>
@@ -29,6 +41,82 @@
     <p>A lenti listában találod meg azokat a feladatokat, amiket valamelyik tárgyadhoz kiírtak.</p>
     <ul id="available-tasks" class="tasks"></ul>
   </template>
+  <template id="teacher-tasks">
+    <h1>Feladatok</h1>
+    <p><button id="new-task">Új feladat</button></p>
+    <ul id="tasks" class="tasks"></ul>
+  </template>
+  <template id="teacher-concrete-tasks">
+    <h1>Konkrét Feladatok</h1>
+    <p><button id="new-concrete-task">Új konkrét feladat</button></p>
+    <ul id="concrete-tasks" class="tasks"></ul>
+  </template>
+  <template id="teacher-students">
+    <h1>Hallgatók</h1>
+    <p><button id="new-student">Új hallgató</button></p>
+    <ul id="students" class="tasks"></ul>
+  </template>
+  <template id="teacher-groups">
+    <h1>Csoportok</h1>
+    <p><button id="new-group">Új csoport</button></p>
+    <ul id="groups" class="tasks"></ul>
+  </template>
+  <template id="teacher-group-item">
+    <a href="/teacher/groups/{{ model.id }}">
+      <header>
+        <h3>{{ model.title }}</h3>
+        <div class="info">
+          <button class="delete">Törlés</button>
+        </div>
+      </header>
+    </a>
+  </template>
+  <template id="teacher-student-item">
+    <a href="/teacher/students/{{ model.id }}">
+      <header>
+        <h3>{{ model.name }} <small>({{ model.neptun }})</small></h3>
+        <div class="info">
+          <button class="delete">Törlés</button>
+        </div>
+      </header>
+    </a>
+  </template>
+  <template id="teacher-group-new">
+    <div id="login-form">
+      <h1>Új csoport</h1>
+      <label for="name">Név: <input type="text" id="name" /></label>
+      <button class="create">Csoport létrehozása</button>
+    </div>
+  </template>
+  <template id="teacher-student-new">
+    <div id="login-form">
+      <h1>Új hallgató</h1>
+      <label for="name">Név: <input type="text" id="name" /></label>
+      <label for="neptun">Neptun: <input type="text" id="neptun" /></label>
+      <button class="create">Hallgató létrehozása</button>
+    </div>
+  </template>
+  <template id="teacher-concrete-task-new">
+    <div id="login-form">
+      <h1>Új konkrét feladat</h1>
+      <label for="title">Cím: <input type="text" id="title" /></label>
+      <label for="description">Leírás: <textarea id="description"></textarea></label><div style="clear: both"></div>
+      <label for="maxApplications">Létszám: <input type="number" id="maxApplications" /></label>
+      <label for="task">Feladat: <select id="task-list"></select></label>
+      <button class="create">Feladat létrehozása</button>
+    </div>
+  </template>
+  <template id="teacher-task-new">
+    <div id="login-form">
+      <h1>Új feladat</h1>
+      <label for="title">Cím: <input type="text" id="title" /></label>
+      <label for="description">Leírás: <textarea id="description"></textarea></label><div style="clear: both"></div>
+      <label for="deadline">Jelentkezés: <input type="date" id="deadline" /></label>
+      <label for="appDeadline">Leadás: <input type="date" id="appDeadline" /></label>
+      <label for="group">Csoport: <select></select></label>
+      <button class="create">Feladat létrehozása</button>
+    </div>
+  </template>
   <template id="student-task-item">
     <a href="/student/tasks/{{ model.id }}">
       <header>
@@ -36,6 +124,30 @@
         <div class="info">
           <h5>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h5>
           <h5>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h5>
+        </div>
+      </header>
+      <p>{{ model.description }}</p>
+    </a>
+  </template>
+  <template id="teacher-concrete-task-item">
+    <a href="/teacher/concrete-tasks/{{ model.id }}">
+      <header>
+        <h3>{{ model.title }}</h3>
+        <div class="info">
+          <button class="delete">Törlés</button>
+        </div>
+      </header>
+      <p>{{ model.description }}</p>
+    </a>
+  </template>
+  <template id="teacher-task-item">
+    <a href="/teacher/tasks/{{ model.id }}">
+      <header>
+        <h3>{{ model.title }}</h3>
+        <div class="info">
+          <h5>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h5>
+          <h5>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h5>
+          <button class="delete">Törlés</button>
         </div>
       </header>
       <p>{{ model.description }}</p>
@@ -56,23 +168,19 @@
     <h3>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h3>
     <h3>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h3>
     <p>{{ model.description }}</p>
+    <button class="toggle"></button>
   </template>
   <template id="student-concrete-task-item">
     <a href="/student/concrete-tasks/{{ model.id }}">
       <header>
         <h3>{{ model.title }}</h3>
-        <h4 class="info"> {{ model.currentApplications }}/{{ model.maxApplications }} fő</h4>
+        <div class="info">
+          <h4>{{ model.currentApplications }}/{{ model.maxApplications }} fő </h4>
+          <button class="toggle"></button>
+        </div>
       </header>
       <p>{{ model.description }}</p>
     </a>
-  </template>
-  <template id="admin-dashboard-tpl">
-    <nav>
-      <a href="/tasks">Feladatok</a>
-      <a href="/users">Felhasználók</a>
-      <a href="/groups">Csoportok</a>
-    </nav>
-    <div id="subview-container"></div>
   </template>
   <template id="admin-tasks-tpl">
     <h1>Konkrét feladatok</h2>
@@ -85,11 +193,33 @@
     <button>Új feladat kiírása</button>
     <ul id="group-tasks"></ul>
   </template>
+  <template id="student-solution">
+    <h2>Eredmény<small id="solution-result">: {{ model.result }}</small></h2>
+    <div id="upload-zone">
+      <div id="upload-progress"></div>
+      <div id="last-upload">Legutolsó megoldás letöltése: <a href="/solutions/{{ model.id }}">{{ model.file }}</a></div>
+      <div id="upload-help">Megoldás feltöltéséhez húzd ide a feltöltendő fájlt!</div>
+    </div>
+  </template>
+  <template id="login-tpl">
+    <div id="login-form">
+      <h1>Bejelentkezés</h1>
+      <label for="login-name">Felhasználónév <input type="text" id="login-name" /></label>
+      <label for="login-password">Jelszó <input type="password" id="login-password" /></label>
+      <div id="login-error">Hibás felhasználónév, vagy jelszó!</div>
+      <button id="login-btn">Bejelentkezés</button>
+    </div>
+  </template>
   <body>
     <div id="application"></div>
     <script src="/js/underscore.js"></script>
     <script src="/js/jquery.js"></script>
     <script src="/js/backbone.js"></script>
+    <script src="/js/Base.js"></script>
+    <script src="/js/StudentConcreteTask.js"></script>
+    <script src="/js/StudentAbstractTask.js"></script>
+    <script src="/js/StudentApplication.js"></script>
+    <script src="/js/Solution.js"></script>
     <script src="/js/app.js"></script>
   </body>
 </html>

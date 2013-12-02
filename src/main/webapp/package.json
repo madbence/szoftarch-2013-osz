@@ -1,0 +1,24 @@
+{
+  "name": "homework-manager",
+  "version": "0.0.1",
+  "description": "Homework manager for the BME course `Software Architectures'.",
+  "main": "app.js",
+  "dependencies": {
+    "busboy": "~0.0.12",
+    "express": "~3.4.5",
+    "mysql": "~2.0.0-alpha9",
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:madbence/szoftarch-2013-osz.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/madbence/szoftarch-2013-osz/issues"
+  }
+}

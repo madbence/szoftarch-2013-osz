@@ -85,8 +85,13 @@ button:hover {
 
 #user-info {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -45px;
+  right: 0px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.2);
+  border: 1px solid #aaa;
+  background: white;
+  border-radius: 3px;
+  padding: 5px;
 }
 
 #main-nav {
@@ -155,6 +160,7 @@ button:hover {
 .task h4 {
   font-size: 0.9em;
   color: #444;
+  display: inline-block;
 }
 
 .task p {
@@ -173,3 +179,66 @@ button:hover {
   right: 5px;
 }
 
+#upload-zone {
+  margin: 20px;
+  padding: 30px;
+  border: 2px dashed #ddd;
+  position: relative;
+}
+
+#upload-progress {
+  position: absolute;
+  height: 100%;
+  background: rgba(0,255,0,0.2);
+  top: 0;
+  left: 0;
+  transition: all 200ms;
+  width: 0%;
+}
+
+#login-form {
+  width: 400px;
+  margin: 0 auto;
+}
+
+#login-form label {
+  display: block;
+  margin: 15px 10px;
+}
+
+#login-form input, #login-form select {
+  display: block;
+  float: right;
+  padding: 5px;
+  border: 1px solid #bbb;
+  background: #eee;
+  border-radius: 3px;
+}
+
+#login-form button {
+  width: 380px;
+  box-sizing: border-box;
+}
+
+#login-error {
+  background: rgba(255,0,0,0.3);
+  margin: 10px;
+  padding: 15px;
+  border-radius: 3px;
+  display: none;
+}
+
+.info button {
+  margin: 0;
+}
+
+textarea {
+  height: 200px;
+  width: 360px;
+  display: block;
+  float: right;
+  padding: 5px;
+  border: 1px solid #bbb;
+  background: #eee;
+  border-radius: 3px;
+}
