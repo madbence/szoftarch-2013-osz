@@ -12,7 +12,7 @@ body {
   font-weight: 300;
   font-size: 14px;
   color: #222;
-  background-color: #eee;
+  background-color: white;
   height: 100%;
   overflow-y: scroll;
 }
@@ -72,12 +72,11 @@ button:hover {
   padding: 30px;
   box-sizing: border-box;
   margin: 0 auto;
-  margin-top: 50px;
+  margin-top: 80px;
   min-height: 100%;
-  background: white;
-  border: 1px solid #aaa;
+  border: 1px solid #ccc;
   border-bottom: none;
-  box-shadow: 0 0 30px rgba(0,0,0,0.2);
+  box-shadow: 0 0 40px rgba(0,0,0,0.2);
   position: relative;
   border-top-left-radius: 3px;
   border-top-right-radius: 3px;
@@ -88,7 +87,7 @@ button:hover {
   top: -45px;
   right: 0px;
   box-shadow: 0 0 30px rgba(0,0,0,0.2);
-  border: 1px solid #aaa;
+  border: 1px solid #ccc;
   background: white;
   border-radius: 3px;
   padding: 5px;
@@ -100,7 +99,7 @@ button:hover {
   height: 40px;
   position: absolute;
   top: -41px;
-  border: 1px solid #aaa;
+  border: 1px solid #ccc;
   border-bottom: none;
   background: white;
 }
@@ -111,9 +110,9 @@ button:hover {
   display: block;
   float: left;
   transition: all 200ms;
-  border-right: 1px solid #aaa;
-  border-bottom: 1px solid #aaa;
-  background: #ddd;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  background: #eee;
 }
 
 #main-nav a:last-child {
@@ -121,7 +120,7 @@ button:hover {
 }
 
 #main-nav a:hover {
-  background: #efefef;
+  background: #ddd;
 }
 
 #main-nav a.active {
