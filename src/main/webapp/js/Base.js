@@ -106,6 +106,24 @@ var CollectionView = BaseView.extend({
   }
 });
 
+var SelectView = Backbone.View.extend({
+  tagName: 'select',
+  initialize: function(opt) {
+    this.valueProperty = opt.valueProperty || 'id';
+    this.itemRenderer = opt.itemRenderer || null;
+    this.itemProperty = opt.itemProperty || 'title';
+    this.collection.on('add', this.render.bind(this));
+    this.collection.on('remove', this.render.bind(this));
+    this.render();
+  },
+  render: function() {
+    this.el.innerHTML = this.collection.map(function(item) {
+      var text = this.itemRenderer ? this.itemRenderer(item) : item.get(this.itemProperty);
+      return '<option value="' + item.get(this.valueProperty) + '">' + text + '</option>';
+    }, this).join('');
+  }
+});
+
 var EmptyListItemView = BaseView.extend({
   className: 'task',
   initialize: function() {

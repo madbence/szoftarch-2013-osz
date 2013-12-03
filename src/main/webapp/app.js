@@ -90,7 +90,6 @@ app.put('/api/teacher/students/:id/solutions/:sid', function(req, res) {
   });
 });
 
-
 app.get('/solutions/:id', function(req, res) {
   res.send(fs.readFileSync('./solutions/' + req.param('id')));
 });
