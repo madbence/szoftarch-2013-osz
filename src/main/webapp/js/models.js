@@ -4,13 +4,16 @@ var ConcreteTask = Backbone.Model.extend({
     this.set('deadline', new Date(data.deadline));
     this.set('isoAppDeadline', data.addDeadline);
     this.set('appDeadline', new Date(data.appDeadline));
+    this.students = new Backbone.Collection(data.students ? data.students : [], {
+      model: Student
+    });
   },
   toJSON: function() {
     var base = {};
     Object.keys(this.attributes).forEach(function(attr) {
       base[attr] = this.attributes[attr];
     }, this);
-    base.deadline = base.deadline.toLocaleString();
+    base.deadline = base.isoDeadline ? base.deadline.toLocaleString() : 'Nincs';
     base.appDeadline = base.appDeadline.toLocaleString();
     return base;
   },
@@ -29,15 +32,29 @@ var Task = Backbone.Model.extend({
     this.set('deadline', new Date(data.deadline));
     this.set('isoAppDeadline', data.addDeadline);
     this.set('appDeadline', new Date(data.appDeadline));
-    this.concreteTasks = new Backbone.Collection();
-    this.concreteTasks._loaded = false;
+    this.concreteTasks = new Backbone.Collection([], {
+      model: ConcreteTask
+    });
+    this.groups = new Backbone.Collection([], {
+      model: Group
+    });
+    if(data.inGroups) {
+      this.groups.add(data.inGroups.map(function(group) {
+        return window.application.groups.get(group.id) || group;
+      }));
+    }
+    if(data.concreteTasks) {
+      this.concreteTasks.add(data.concreteTasks.map(function(ctask) {
+        return window.application.concreteTasks.get(ctask.id) || ctask;
+      }));
+    }
   },
   toJSON: function() {
     var base = {};
     Object.keys(this.attributes).forEach(function(attr) {
       base[attr] = this.attributes[attr];
     }, this);
-    base.deadline = base.deadline.toLocaleString();
+    base.deadline = base.isoDeadline ? base.deadline.toLocaleString() : 'Nincs';
     base.appDeadline = base.appDeadline.toLocaleString();
     return base;
   },
@@ -71,4 +88,8 @@ var Student = Backbone.Model.extend({
   }
 });
 
-var Solution = Backbone.Model.extend({});
+var Solution = Backbone.Model.extend({
+  initialize: function(data) {
+    this.set('appDeadline', new Date(data.appDeadline));
+  }
+});

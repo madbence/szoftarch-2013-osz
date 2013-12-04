@@ -80,7 +80,7 @@ var TeacherApplication = Backbone.Model.extend({
   },
   getCollection: function(route, collection, model) {
     if(collection._loaded) {
-      return;
+      return collection;
     }
     this.ajax.get('/api/teacher/' + route, null, function(data) {
       collection.add(data.map(function(m) {
@@ -88,13 +88,14 @@ var TeacherApplication = Backbone.Model.extend({
       }));
       collection._loaded = true;
     });
+    return collection;
   },
   getItem: function(route, collection, id, model, fn) {
     if(collection.get('id') && collection.get('id')._detailsLoaded) {
       return fn(collection.get('id'));
     }
     this.ajax.get('/api/teacher/' + route + '/' + id, null, function(data) {
-      var m = new model(m);
+      var m = new model(data);
       collection.add(m);
       m._detailsLoaded = true;
       fn(m);
@@ -107,27 +108,57 @@ var TeacherApplication = Backbone.Model.extend({
       window.appRouter.navigate('teacher/' + route, { trigger: true });
     });
   },
-  deleteItem: function(route, collecton, id) {
+  deleteItem: function(route, collection, id) {
     var self = this;
     this.ajax.delete('/api/teacher/' + route + '/' + id, null, function() {
       collection.remove(id);
       window.appRouter.navigate('teacher/' + route);
     });
   },
-  getTasks:         function() { this.getCollection('tasks', this.tasks, Task); },
-  getConcreteTasks: function() { this.getCollection('concrete-tasks', this.concreteTasks, ConcreteTask); },
-  getGroups:        function() { this.getCollection('groups', this.groups, Group); },
-  getStudents:      function() { this.getCollection('tasks', this.students, Student); },
+  getTasks:         function() { return this.getCollection('tasks', this.tasks, Task); },
+  getConcreteTasks: function() { return this.getCollection('concrete-tasks', this.concreteTasks, ConcreteTask); },
+  getGroups:        function() { return this.getCollection('groups', this.groups, Group); },
+  getStudents:      function() { return this.getCollection('students', this.students, Student); },
   getTask:         function(id, fn) { this.getItem('tasks', this.tasks, id, Task, fn); },
   getConcreteTask: function(id, fn) { this.getItem('concrete-tasks', this.concreteTasks, id, ConcreteTask, fn); },
-  getGroup:        function(id, fn) { this.getItem('groups', this.groups, id, Backbone.Model, fn); },
-  getStudent:      function(id, fn) { this.getItem('students', this.students, id, Backbone.Model, fn); },
+  getGroup:        function(id, fn) { this.getItem('groups', this.groups, id, Group, fn); },
+  getStudent:      function(id, fn) { this.getItem('students', this.students, id, Student, fn); },
   createTask:         function(data) { this.createItem('tasks', this.tasks, data); },
   createConcreteTask: function(data) { this.createItem('concrete-tasks', this.concreteTasks, data); },
   createGroup:        function(data) { this.createItem('groups', this.groups, data); },
   createStudent:      function(data) { this.createItem('students', this.students, data); },
   deleteTask:         function(id) { this.deleteItem('tasks', this.tasks, id); },
-  deleteConcreteTask: function(id) { this.deleteItem('concreteTasks', this.concreteTasks, id); },
+  deleteConcreteTask: function(id) { this.deleteItem('concrete-tasks', this.concreteTasks, id); },
   deleteStudent:      function(id) { this.deleteItem('students', this.students, id); },
   deleteGroup:        function(id) { this.deleteItem('groups', this.groups, id); },
+  removeTaskFromGroup: function(task, group) {
+    this.ajax.delete('/api/teacher/tasks/' + task.get('id') + '/groups/' + group.get('id'), null, function() {
+      task.groups.remove(group);
+    });
+  },
+  addTaskToGroup: function(task, group) {
+    this.ajax.post('/api/teacher/tasks/' + task.get('id') + '/groups', { id: group.get('id') }, function() {
+      task.groups.add(group);
+    });
+  },
+  deleteStudentApplication: function(student, concreteTask) {
+    this.ajax.delete('/api/teacher/concrete-tasks/' + concreteTask.get('id') + '/students/' + student.get('id'), null, function() {
+      concreteTask.students.remove(student);
+    });
+  },
+  addStudentApplication: function(student, concreteTask) {
+    this.ajax.post('/api/teacher/concrete-tasks/' + concreteTask.get('id') + '/students', { id: student.get('id') }, function() {
+      concreteTask.students.add(student);
+    });
+  },
+  removeStudentFromGroup: function(student, group) {
+    this.ajax.delete('/api/teacher/groups/' + group.get('id') + '/students/' + student.get('id'), null, function() {
+      group.students.remove(student);
+    });
+  },
+  addStudentToGroup: function(student, group) {
+    this.ajax.post('/api/teacher/groups/' + group.get('id') + '/students', { id: student.get('id') }, function() {
+      group.students.add(student);
+    });
+  }
 });

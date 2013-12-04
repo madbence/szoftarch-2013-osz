@@ -29,6 +29,11 @@ var StudentSolutionView = BaseView.extend({
     return false;
   },
   update: function() {
+    if(this.baseModel.get('applied')) {
+      this.el.style.display = 'block';
+    } else {
+      this.el.style.display = 'none';
+    }
     if(!this.model.get('id')) {
       this.el.querySelector('#last-upload').style.display = 'none';
     } else {

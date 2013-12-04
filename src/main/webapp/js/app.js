@@ -1,10 +1,5 @@
 /* jshint boss: true */
 
-/**
- * @title Foobar
- * @author Bence Dányi
- */
-
 
 var LoginView = BaseView.extend({
   templateSelector: '#login-tpl',
@@ -32,8 +27,30 @@ var LoginView = BaseView.extend({
   }
 });
 
-
-
+var TeacherStudentItemView3 = BaseView.extend({
+  templateSelector: '#teacher-student-item3',
+  className: 'task',
+  events: {
+    'click .delete': 'delete',
+  },
+  'delete': function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.application.removeStudentFromGroup(this.model, this.parentView.model);
+  }
+});
+var TeacherStudentItemView2 = BaseView.extend({
+  templateSelector: '#teacher-student-item2',
+  className: 'task',
+  events: {
+    'click .delete': 'delete',
+  },
+  'delete': function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.application.deleteStudentApplication(this.model, this.parentView.model);
+  }
+});
 var TeacherStudentItemView = BaseView.extend({
   templateSelector: '#teacher-student-item',
   className: 'task',
@@ -57,36 +74,17 @@ var TeacherStudentsView = CollectionView.extend({
   }
 });
 var TeacherStudentView = BaseView.extend({
-  templateSelector: '#teacher-rate',
+  templateSelector: '#teacher-student',
   initialize: function() {
     BaseView.prototype.initialize.apply(this, arguments);
-    var self = this;
-    $.ajax({
-      url: '/api/teacher/students/' + this.model.get('id') + '/solutions',
-      dataType: 'json',
-          headers: {
-            'X-Token': window.application.get('token')
-          },
-      success: function(data) {
-        self.el.querySelector('ul').innerHTML=data.map(function(d) {
-          return '<li><a href="/solutions/' + d.id +'">' + d.file + '</a> <input id="rate-' + d.id +'"><button data-id="' + d.id +'">ok</button></li>';
-        }).join('');
-      }
+    var solutionView = new SimpleCollectionView({
+      collection: this.model.solutions,
+      el: this.el.querySelector('#solutions'),
+      childViewClass: TeacherSolutionViewItem
     });
   },
-  events: {
-    'click button': 'save'
-  },
-  save: function(e) {
-    $.ajax({
-      type: 'put',
-          headers: {
-            'X-Token': window.application.get('token')
-          },
-      data: JSON.stringify({results: document.getElementById('rate-' + e.currentTarget.dataset['id']).value}),
-      contentType: 'application/json',
-      url: '/api/teacher/students/' + this.model.get('id') + '/solutions/' + e.currentTarget.dataset['id']
-    });
+  update: function() {
+    this.el.querySelector('#student-solutions') && (this.el.querySelector('#student-solutions').innerText = this.model.solutions.size());
   }
 });
 
@@ -113,6 +111,18 @@ var TeacherGroupItemView = BaseView.extend({
     window.application.deleteGroup(this.model.get('id'));
   }
 });
+var TeacherGroupItemView2 = BaseView.extend({
+  templateSelector: '#teacher-group-item2',
+  className: 'task',
+  events: {
+    'click .delete': 'delete',
+  },
+  'delete': function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.model.removeTask(this.parentView.model);
+  }
+});
 var TeacherGroupsView = CollectionView.extend({
   templateSelector: '#teacher-groups',
   containerSelector: '#groups',
@@ -125,7 +135,35 @@ var TeacherGroupsView = CollectionView.extend({
     window.appRouter.navigate('teacher/groups/new', {trigger:true});
   }
 });
-var TeacherGroupView = BaseView.extend({});
+var TeacherGroupView = BaseView.extend({
+  templateSelector: '#teacher-group',
+  events: {
+    'click #add-student': 'add',
+  },
+  initialize: function() {
+    BaseView.prototype.initialize.apply(this, arguments);
+    this.selectView = new SelectView({
+      collection: window.application.getStudents(),
+      el: this.el.querySelector('#student-list'),
+      itemRenderer: function(model) { return model.get('name') + ' (' + model.get('neptun') + ')'; },
+    });
+    var membersView = new SimpleCollectionView({
+      collection: this.model.students,
+      el: this.el.querySelector('#students-list'),
+      childViewClass: TeacherStudentItemView3,
+      parentView: this,
+    });
+    this.model.students
+      .on('add', this.update.bind(this))
+      .on('remove', this.update.bind(this));
+  },
+  update: function() {
+    this.el.querySelector('#group-members') && (this.el.querySelector('#group-members').innerText = this.model.students.size());
+  },
+  add: function() {
+    window.application.addStudentToGroup(this.selectView.selectedItem(), this.model);
+  }
+});
 var TeacherGroupCreateView = BaseView.extend({
   templateSelector: '#teacher-group-new',
   events: {
@@ -142,13 +180,11 @@ var TeacherTaskCreateView = BaseView.extend({
   templateSelector: '#teacher-task-new',
   initialize: function(opt) {
     BaseView.prototype.initialize.apply(this, arguments);
-    window.application.loadGroups();
     var self = this;
     var select = new SelectView({
       el: this.el.querySelector('select'),
-      collection: window.application.groups
+      collection: window.application.getGroups()
     });
-    window.application.loadGroups();
   },
   events: {
     'click .create': 'create',
@@ -157,9 +193,6 @@ var TeacherTaskCreateView = BaseView.extend({
     window.application.createTask({
       title: this.el.querySelector('#title').value,
       description: this.el.querySelector('#description').value,
-      deadline: this.el.querySelector('#deadline').value,
-      applicationDeadline: this.el.querySelector('#appDeadline').value,
-      group: this.el.querySelector('select').value
     });
   }
 });
@@ -167,6 +200,14 @@ var TeacherTaskCreateView = BaseView.extend({
 var TeacherConcreteTaskItemView = BaseView.extend({
   templateSelector: '#teacher-concrete-task-item',
   className: 'task',
+  events: {
+    'click .delete': 'remove',
+  },
+  remove: function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.application.deleteConcreteTask(this.model.get('id'));
+  }
 });
 var TeacherConcreteTasksView = CollectionView.extend({
   templateSelector: '#teacher-concrete-tasks',
@@ -180,19 +221,44 @@ var TeacherConcreteTasksView = CollectionView.extend({
     window.appRouter.navigate('teacher/concrete-tasks/new', {trigger:true});
   }
 });
-var TeacherConcreteTaskView = BaseView.extend({});
+var TeacherConcreteTaskView = BaseView.extend({
+  templateSelector: '#teacher-concrete-task',
+  events: {
+    'click #add-student': 'add'
+  },
+  initialize: function(opt) {
+    BaseView.prototype.initialize.apply(this, arguments);
+    this.selectView = new SelectView({
+      collection: window.application.getStudents(),
+      el: this.el.querySelector('#students-list'),
+      itemRenderer: function(model) { return model.get('name') + ' (' + model.get('neptun') + ')'; },
+    });
+    var studentList = new SimpleCollectionView({
+      collection: this.model.students,
+      childViewClass: TeacherStudentItemView2,
+      parentView: this,
+      el: this.el.querySelector('#student-list')
+    });
+    this.model.students
+      .on('add', this.update.bind(this))
+      .on('remove', this.update.bind(this));
+  },
+  add: function() {
+    window.application.addStudentApplication(this.selectView.selectedItem(), this.model);
+  },
+  update: function() {
+    this.el.querySelector('#applied-students') && (this.el.querySelector('#applied-students').innerText = this.model.students.size());
+  }
+});
 var TeacherConcreteTaskCreateView = BaseView.extend({
   templateSelector: '#teacher-concrete-task-new',
   initialize: function(opt) {
     BaseView.prototype.initialize.apply(this, arguments);
-    window.application.loadTasks();
-    window.application.loadStudents();
     var self = this;
-    setTimeout(function() {
-      self.el.querySelector('select#task-list').innerHTML = window.application.tasks.map(function(g) {
-        return '<option value="' + g.get('id') + '">' + g.get('title') + '</option>';
-      });
-    }, 1000);
+    var selectView = new SelectView({
+      collection: window.application.getTasks(),
+      el: this.el.querySelector('#task-list')
+    });
   },
   events: {
     'click .create': 'create',
@@ -202,6 +268,8 @@ var TeacherConcreteTaskCreateView = BaseView.extend({
       title: this.el.querySelector('#title').value,
       description: this.el.querySelector('#description').value,
       maxApplications: this.el.querySelector('#maxApplications').value,
+      deadline: this.el.querySelector('#deadline').value,
+      appDeadline: this.el.querySelector('#appDeadline').value,
       task: this.el.querySelector('select').value
     });
   }
@@ -217,7 +285,11 @@ var TeacherTaskItemView = BaseView.extend({
     e.preventDefault();
     window.appRouter.navigate('teacher/tasks/' + this.model.get('id'), {trigger: true});
   },
-  'delete': function() { alert('DELETE'); }
+  'delete': function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.application.deleteTask(this.model.get('id'));
+  }
 });
 
 var TeacherTasksView = CollectionView.extend({
@@ -233,16 +305,61 @@ var TeacherTasksView = CollectionView.extend({
   }
 });
 
-var TeacherTaskView = CollectionView.extend({
+var TeacherTaskView = BaseView.extend({
   templateSelector: '#teacher-task',
-  containerSelector: '#concrete-tasks',
-  emptyListView: EmptyListItemView,
-  childViewClass: TeacherConcreteTaskItemView,
+  events: {
+    'click #add-group': 'add',
+  },
   initialize: function() {
-    var self = this;
-    this.collection = this.model.concreteTasks;
-    CollectionView.prototype.initialize.apply(this, arguments);
-    window.application.loadAbstractTask(this.model.get('id'));
+    BaseView.prototype.initialize.apply(this, arguments);
+    this.groupSelect = new SelectView({
+      collection: window.application.getGroups(),
+      el: this.el.querySelector('#group-list')
+    });
+    var groupList = new SimpleCollectionView({
+      parentView: this,
+      childViewClass: TeacherGroupItemView2,
+      collection: this.model.groups,
+      el: this.el.querySelector('#task-groups')
+    });
+    var subtaskList = new SimpleCollectionView({
+      childViewClass: TeacherConcreteTaskItemView,
+      collection: this.model.concreteTasks,
+      el: this.el.querySelector('#task-subtasks')
+    });
+    this.model.groups
+      .on('add', this.update.bind(this))
+      .on('remove', this.update.bind(this));
+  },
+  add: function() {
+    window.application.addTaskToGroup(this.model, this.groupSelect.selectedItem());
+  },
+  update: function() {
+    this.el.querySelector('#group-count') && (this.el.querySelector('#group-count').innerText = this.model.groups.size());
+  }
+});
+
+var TeacherSolutionViewItem = BaseView.extend({
+  templateSelector: '#teacher-solution-item',
+  className: 'task solution',
+  events: {
+    'click': 'sav'
+  },
+  sav: function(e) {
+    $.ajax({
+      type: 'put',
+      url: '/api/teacher/solutions/' + this.model.get('id'),
+      data: JSON.stringify({ grade: this.el.querySelector('#grade').value, comment: this.el.querySelector('#comment').value }),
+      headers: { 'x-token': window.application.get('token') },
+      dataType: 'json',
+      contentType: 'application/json'
+    });
+  },
+  update: function() {
+    if(this.model.get('appDeadline').getTime() > Date.now()) {
+      this.el.querySelector('#save').innerText = 'A feladat még beadható!';
+      this.el.querySelector('#save').disabled = true;
+    }
   }
 });
 

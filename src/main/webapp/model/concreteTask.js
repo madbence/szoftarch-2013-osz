@@ -1,4 +1,5 @@
 /* jshint multistr: true */
+var model = require('./index');
 
 exports.findById = function findById(id, fn) {
   exports.mysql.query('SELECT * FROM concreteTasks WHERE id = ?', [id], function(err, results) {
@@ -9,8 +10,29 @@ exports.findById = function findById(id, fn) {
   });
 };
 
-exports.create = function create(title, description, maxApplications, taskId, teacherId, fn) {
-  exports.mysql.query('INSERT INTO concreteTasks (title, description, maxApplications, taskId, teacherId) VALUES (?, ?, ?, ?, ?)', [title, description, maxApplications, taskId, teacherId], fn);
+exports.teacherDetails = function teacherDetails(id, fn) {
+  exports.mysql.query('SELECT ct.*, t.title as taskTitle FROM concreteTasks ct LEFT JOIN tasks t on t.id = ct.taskId WHERE ct.id = ?', [id], function(err, res) {
+    if(err) {
+      return fn(err);
+    }
+    model.student.findByConcreteTaskId(id, function(err, students) {
+      if(err) {
+        return fn(err);
+      }
+      res[0].applications = students.length;
+      res[0].students = students;
+      fn(null, res[0]);
+    });
+  });
+};
+
+exports.findByTaskId = function findByTaskId(taskId, fn) {
+  exports.mysql.query('SELECT * FROM concreteTasks WHERE taskId = ?', [taskId], fn);
+};
+
+exports.create = function create(title, description, maxApplications, taskId, teacherId, deadline, appDeadline, fn) {
+  exports.mysql.query('INSERT INTO concreteTasks (title, description, maxApplications, taskId, teacherId, deadline, appDeadline) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [title, description, maxApplications, taskId, teacherId, deadline, appDeadline], fn);
 };
 
 exports.update = function update(id, title, description, maxApplications, taskId, teacherId, fn) {
@@ -20,6 +42,10 @@ exports.update = function update(id, title, description, maxApplications, taskId
 
 exports.all = function(fn) {
   exports.mysql.query('SELECT * FROM concreteTasks', fn);
+};
+
+exports.delete = function _delete(id, fn) {
+  exports.mysql.query('DELETE FROM concreteTasks WHERE id = ?', [id], fn);
 };
 
 exports.forTask = function forTask(userId, taskId, fn) {
@@ -47,8 +73,8 @@ exports.applied = function applied(userId, fn) {
                  ct.title as title, \
                  ct.description as description, \
                  ct.maxApplications as maxApplications, \
-                 t.deadline as deadline, \
-                 t.appDeadline as appDeadline, \
+                 ct.deadline as deadline, \
+                 ct.appDeadline as appDeadline, \
                  g.title as `group`, \
                  count(a.id) as currentApplications, \
                  sum(if(a.studentId = ?, 1, 0)) as applied \
@@ -71,7 +97,12 @@ exports.applied = function applied(userId, fn) {
 };
 
 exports.canApply = function canApply(userId, taskId, fn) {
-
+  exports.mysql.query('SELECT count(*) as c FROM applications WHERE studentId = ? AND concreteTaskId = ?', [userId, taskId], function(err, res) {
+    if(err) {
+      fn(err);
+    }
+    fn(err, !res[0].c);
+  });
 };
 
 exports.apply = function apply(userId, taskId, fn) {

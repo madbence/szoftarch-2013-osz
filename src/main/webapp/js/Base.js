@@ -121,7 +121,42 @@ var SelectView = Backbone.View.extend({
       var text = this.itemRenderer ? this.itemRenderer(item) : item.get(this.itemProperty);
       return '<option value="' + item.get(this.valueProperty) + '">' + text + '</option>';
     }, this).join('');
+  },
+  selectedItem: function() {
+    return this.collection.get(this.el.value);
   }
+});
+
+var SimpleCollectionView = Backbone.View.extend({
+  initialize: function(opt) {
+    this._childViews = [];
+    this._childViewClass = opt.childViewClass;
+    this.parentView = opt.parentView;
+    this.collection
+      .on('add', this.add.bind(this))
+      .on('remove', this.remove.bind(this));
+    this._placeholder = new EmptyListItemView();
+    this.el.appendChild(this._placeholder.el);
+    this.collection.each(this.add.bind(this));
+  },
+  add: function(model) {
+    var view = new (this._childViewClass)({
+      model: model
+    });
+    view.parentView = this.parentView;
+    if(this._childViews.length === 0) {
+      this.el.removeChild(this._placeholder.el);
+    }
+    this._childViews.push(view);
+    this.el.appendChild(view.el);
+  },
+  remove: function(model, collection, opt) {
+    var view = this._childViews.splice(opt.index, 1)[0];
+    this.el.removeChild(view.el);
+    if(this._childViews.length === 0) {
+      this.el.appendChild(this._placeholder.el);
+    }
+  },
 });
 
 var EmptyListItemView = BaseView.extend({

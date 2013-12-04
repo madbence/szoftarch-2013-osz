@@ -152,8 +152,17 @@ button:hover {
   border: none;
 }
 
+.task.full {
+  background-color: rgba(255,0,0,0.2);
+}
+.task.full:hover {
+  background-color: rgba(255,0,0,0.3);
+}
 .task.applied {
   background-color: rgba(0,128,255,0.2);
+}
+.task.applied:hover {
+  background-color: rgba(0,128,255,0.3);
 }
 
 .task h4 {
@@ -212,11 +221,15 @@ button:hover {
   border: 1px solid #bbb;
   background: #eee;
   border-radius: 3px;
+  width: 255px;
+  font-family: inherit;
 }
 
-#login-form button {
-  width: 380px;
-  box-sizing: border-box;
+select {
+  padding: 5px;
+  border: 1px solid #bbb;
+  background: #eee;
+  border-radius: 3px;
 }
 
 #login-error {
@@ -233,11 +246,30 @@ button:hover {
 
 textarea {
   height: 200px;
-  width: 360px;
+  width: 255px;
   display: block;
   float: right;
   padding: 5px;
   border: 1px solid #bbb;
   background: #eee;
   border-radius: 3px;
+  font-family: inherit;
 }
+
+button.create {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+#login-form button {
+  position: initial;
+  width: 255px;
+  float: right;
+  box-sizing: content-box;
+}
+
+#subview-container {
+  position: relative;
+}
+

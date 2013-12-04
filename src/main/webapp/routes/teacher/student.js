@@ -25,3 +25,10 @@ exports.delete = function _delete(req, res) {
     });
   });
 };
+
+exports.show = function show(req, res) {
+  var _ = handle(req);
+  _(model.student.teacherDetails)(req.param('id'), function(data) {
+    res.json(data);
+  });
+};

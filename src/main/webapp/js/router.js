@@ -63,12 +63,14 @@ var AppRouter = Backbone.Router.extend({
       'tasks':          TeacherTaskCreateView,
       'concrete-tasks': TeacherConcreteTaskCreateView,
       'groups':         TeacherGroupCreateView,
-      'student':        TeacherStudentCreateView,
+      'students':        TeacherStudentCreateView,
     };
     if(!mapping[collection]) { return; }
-    this.appView.setTab(new mapping[collection]({
+    this.appView.activeView = new mapping[collection]({
       model: new Backbone.Model()
-    }));
+    });
+    this.appView._name = null;
+    this.appView.update();
   },
   teacherItem: function(collection, id) {
     var mapping = {

@@ -43,23 +43,33 @@
   </template>
   <template id="teacher-tasks">
     <h1>Feladatok</h1>
-    <p><button id="new-task">Új feladat</button></p>
+    <button id="new-task" class="create">Új feladat</button>
     <ul id="tasks" class="tasks"></ul>
   </template>
   <template id="teacher-concrete-tasks">
     <h1>Konkrét Feladatok</h1>
-    <p><button id="new-concrete-task">Új konkrét feladat</button></p>
+    <button id="new-concrete-task" class="create">Új konkrét feladat</button>
     <ul id="concrete-tasks" class="tasks"></ul>
   </template>
   <template id="teacher-students">
     <h1>Hallgatók</h1>
-    <p><button id="new-student">Új hallgató</button></p>
+    <button id="new-student" class="create">Új hallgató</button>
     <ul id="students" class="tasks"></ul>
   </template>
   <template id="teacher-groups">
     <h1>Csoportok</h1>
-    <p><button id="new-group">Új csoport</button></p>
+    <button id="new-group" class="create">Új csoport</button>
     <ul id="groups" class="tasks"></ul>
+  </template>
+  <template id="teacher-group-item2">
+    <a href="/teacher/groups/{{ model.id }}">
+      <header>
+        <h3>{{ model.title }}</h3>
+        <div class="info">
+          <button class="delete">Kiírás törlése</button>
+        </div>
+      </header>
+    </a>
   </template>
   <template id="teacher-group-item">
     <a href="/teacher/groups/{{ model.id }}">
@@ -67,6 +77,26 @@
         <h3>{{ model.title }}</h3>
         <div class="info">
           <button class="delete">Törlés</button>
+        </div>
+      </header>
+    </a>
+  </template>
+  <template id="teacher-student-item2">
+    <a href="/teacher/students/{{ model.id }}">
+      <header>
+        <h3>{{ model.name }} <small>({{ model.neptun }})</small></h3>
+        <div class="info">
+          <button class="delete">Jelentkezés törlése</button>
+        </div>
+      </header>
+    </a>
+  </template>
+  <template id="teacher-student-item3">
+    <a href="/teacher/students/{{ model.id }}">
+      <header>
+        <h3>{{ model.name }} <small>({{ model.neptun }})</small></h3>
+        <div class="info">
+          <button class="delete">Eltávolítás</button>
         </div>
       </header>
     </a>
@@ -101,7 +131,9 @@
       <h1>Új konkrét feladat</h1>
       <label for="title">Cím: <input type="text" id="title" /></label>
       <label for="description">Leírás: <textarea id="description"></textarea></label><div style="clear: both"></div>
-      <label for="maxApplications">Létszám: <input type="number" id="maxApplications" /></label>
+      <label for="maxApplications">Létszám: <input type="number" id="maxApplications" min="1" value="999"/></label>
+      <label for="deadline">J. határidő: <input type="date" id="deadline" /></label>
+      <label for="appDeadline">L. határidő: <input type="date" id="appDeadline" /></label>
       <label for="task">Feladat: <select id="task-list"></select></label>
       <button class="create">Feladat létrehozása</button>
     </div>
@@ -111,9 +143,6 @@
       <h1>Új feladat</h1>
       <label for="title">Cím: <input type="text" id="title" /></label>
       <label for="description">Leírás: <textarea id="description"></textarea></label><div style="clear: both"></div>
-      <label for="deadline">Jelentkezés: <input type="date" id="deadline" /></label>
-      <label for="appDeadline">Leadás: <input type="date" id="appDeadline" /></label>
-      <label for="group">Csoport: <select></select></label>
       <button class="create">Feladat létrehozása</button>
     </div>
   </template>
@@ -121,10 +150,6 @@
     <a href="/student/tasks/{{ model.id }}">
       <header>
         <h3>{{ model.title }} <small>({{ model.group }})</small></h3>
-        <div class="info">
-          <h5>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h5>
-          <h5>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h5>
-        </div>
       </header>
       <p>{{ model.description }}</p>
     </a>
@@ -134,6 +159,9 @@
       <header>
         <h3>{{ model.title }}</h3>
         <div class="info">
+          <h5>Maximális létszám: {{ model.maxApplications }}</h5>
+          <h5>Jelenktezési határidő: {{ model.deadline }}</h5>
+          <h5>Leadási határidő: {{ model.appDeadline }}</h5>
           <button class="delete">Törlés</button>
         </div>
       </header>
@@ -145,23 +173,29 @@
       <header>
         <h3>{{ model.title }}</h3>
         <div class="info">
-          <h5>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h5>
-          <h5>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h5>
+          <h5>{{ model.subtasks }} konkrét feladat</h5>
+          <h5>{{ model.groups }} csoportnak kiírva</h5>
           <button class="delete">Törlés</button>
         </div>
       </header>
       <p>{{ model.description }}</p>
     </a>
   </template>
-  <template id="teacher-rate">
-    <h1>{{model.name}}</h1>
-    <ul></ul>
+  <template id="teacher-student">
+    <h1>{{ model.name }} <small>{{ model.neptun }}</small></h1>
+    <h2><span id="student-solutions"></span> beadott megoldás</h2>
+    <ul id="solutions" class="tasks"></ul>
+  </template>
+  <template id="teacher-solution-item">
+    <header>
+      <h3>{{ model.title }} <small>({{ model.group }})</small></h3>
+    </header>
+    <p><a href="/solutions/{{ model.id }}">Letöltés</a></p>
+    <p>Értékelés: <input type="number" id="grade" value="{{ model.result }}" /> Megjegyzés: <input id="comment" value="{{ model.comment }}" /><button id="save">Mentés</button></p>
   </template>
   <template id="student-task">
     <h1>{{ model.title }}</h1>
     <h2>{{ model.group }}</h2>
-    <h3>Jelentkezési határidő: <time datetime="{{model.isoDeadline}}">{{model.deadline}}</time></h3>
-    <h3>Beadási határidő: <time datetime="{{model.isoApplicationDeadline}}">{{model.appDeadline}}</time></h3>
     <p>{{ model.description }}</p>
     <p>A feladathoz tartozó konkrét feladatok listája:</p>
     <ul id="concrete-tasks" class="tasks"></ul>
@@ -180,25 +214,17 @@
         <h3>{{ model.title }}</h3>
         <div class="info">
           <h4>{{ model.currentApplications }}/{{ model.maxApplications }} fő </h4>
+          <h5>Jelenktezési határidő: {{ model.deadline }}</h5>
+          <h5>Leadási határidő: {{ model.appDeadline }}</h5>
           <button class="toggle"></button>
         </div>
       </header>
       <p>{{ model.description }}</p>
     </a>
   </template>
-  <template id="admin-tasks-tpl">
-    <h1>Konkrét feladatok</h2>
-    <button>Új konkrét feladat kiírása</button>
-    <h2>Csoportnak kiírt feladatok</h2>
-    <ul id="group-concrete-tasks"></ul>
-    <h3>Felhasználóknak kiírt feladatok</h3>
-    <ul id="user-concrete-tasks"></ul>
-    <h1>Feladatok</h1>
-    <button>Új feladat kiírása</button>
-    <ul id="group-tasks"></ul>
-  </template>
   <template id="student-solution">
     <h2>Eredmény<small id="solution-result">: {{ model.result }}</small></h2>
+    <p>{{ model.comment }}</p>
     <div id="upload-zone">
       <div id="upload-progress"></div>
       <div id="last-upload">Legutolsó megoldás letöltése: <a href="/solutions/{{ model.id }}">{{ model.file }}</a></div>
@@ -213,6 +239,30 @@
       <div id="login-error">Hibás felhasználónév, vagy jelszó!</div>
       <button id="login-btn">Bejelentkezés</button>
     </div>
+  </template>
+  <template id="teacher-task">
+    <h1>{{ model.title }}</h1>
+    <h2><span id="group-count">{{ model.groups }}</span> csoportnak kiírva</h2>
+    <ul id="task-groups" class="tasks"></ul>
+    <p>Feladat kiírása csoportnak <select id="group-list"><select><button id="add-group">Feladat kiírása</button></p>
+    <h2>{{ model.subtasks }} konkrét feladat</h2>
+    <ul id="task-subtasks" class="tasks"></ul>
+  </template>
+  <template id="teacher-concrete-task">
+    <h1>{{ model.title }}</h1>
+    <h3>Jelentkezési határidő: {{ model.deadline }}</h3>
+    <h3>Leadási határidő: {{ model.appDeadline }}</h3>
+    <h3>Maximális létszám: {{ model.maxApplications }}</h3>
+    <p>{{ model.description }}</p>
+    <h2><span id="applied-students">{{ model.applications }}</span> jelentkezett hallgató</h2>
+    <ul id="student-list" class="tasks"></ul>
+    <p>Feladat kiírása felhasználónak <select id="students-list"></select><button id="add-student">Feladat kiírása</button></p>
+  </template>
+  <template id="teacher-group">
+    <h1>{{ model.title }}</h1>
+    <h2><span id="group-members">{{ model.members }}</span> tag</h2>
+    <ul id="students-list" class="tasks"></ul>
+    <p>Hallgató hozzáadása <select id="student-list"></select><button id="add-student">Hozzáadás</button></p>
   </template>
   <body>
     <div id="application"></div>

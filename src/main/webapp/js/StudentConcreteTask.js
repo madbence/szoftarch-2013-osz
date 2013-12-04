@@ -12,6 +12,7 @@ var StudentConcreteTaskItemView = BaseView.extend({
   update: function() {
     BaseView.prototype.update();
     this.el.classList[this.model.get('applied') ? 'add' : 'remove']('applied');
+    this.el.classList[this.model.get('maxApplications') <= this.model.get('currentApplications') ? 'add' : 'remove']('full');
     var appState = appBtnState(this.model);
     var appBtn = this.el.querySelector('.toggle');
     appBtn.innerHTML = appState.text;
